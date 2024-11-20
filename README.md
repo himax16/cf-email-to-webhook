@@ -18,3 +18,4 @@ Simple CloudFlare Workers to forward emails to Discord webhook.
 > Make sure that `PREVIEW_LENGTH` less than the Discord message limit (2000 characters) including the extra line.
 
 5. Deploy the worker with `npx wrangler deploy`.
+6. Configure the [email rule actions](https://developers.cloudflare.com/email-routing/setup/email-routing-addresses/#email-rule-actions) to "Send to a Worker".

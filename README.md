@@ -5,8 +5,8 @@ Simple CloudFlare Workers to forward emails to Discord webhook.
 ## Usage
 
 1. Create a CloudFlare Account.
-2. Install [CloudFlare Wrangler](https://developers.cloudflare.com/workers/cli-wrangler/install-update).
-3. Clone this repository.
+2. Clone this repository.
+3. Install [CloudFlare Wrangler](https://developers.cloudflare.com/workers/cli-wrangler/install-update).
 4. Set the worker secrets using `npx wrangler secret put <key>` or through the CloudFlare dashboard:
 
     - `WEBHOOK_URL`: The Discord webhook URL.

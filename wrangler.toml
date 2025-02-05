@@ -2,11 +2,6 @@ name = "cf-email-to-webhook"
 main = "src/index.js"
 compatibility_date = "2024-09-02"
 
-# Change this KV namespace to your own 
-# kv_namespaces = [
-#   { binding = "permias_url", id = "26616c37abb44c2b924ed3e19e49d88d" },
-# ]
-
 [observability]
 enabled = true
 head_sampling_rate = 1 # optional. default = 1.

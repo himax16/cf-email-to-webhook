@@ -1,9 +1,9 @@
 {
   "name": "cf-email-to-webhook",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Himawan Winarto <himawan@winarto.net>",
   "devDependencies": {
-    "wrangler": "^3.88.0"
+    "wrangler": "^3.107.3"
   },
   "private": true,
   "scripts": {

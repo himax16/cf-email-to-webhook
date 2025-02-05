@@ -1,5 +1,3 @@
-// import { EmailMessage } from "cloudflare:email";
-// import { createMimeMessage } from "mimetext";
 import PostalMime from 'postal-mime';
 
 export default {
@@ -18,6 +16,9 @@ export default {
     const outAdd = env.OUT_ADD;
     const forwardOut = (!outAdd || outAdd.length === 0) ? false : true;
 
+    // Set the preview length for the email body
+    const previewLength = env.PREVIEW_LENGTH || 400;
+
     // Get the email sender and inbound addresses
     const emSender = message.from;
     const emAdd = message.to;
@@ -32,19 +33,29 @@ export default {
     // Parse the email content
     const parsedEmail = await PostalMime.parse(message.raw);
 
-    // Get the email subject
-    const emSubject = parsedEmail.subject || "No subject";
-
     // Log the email content
     console.log('Subject: ', parsedEmail.subject);
     console.log('HTML: ', parsedEmail.html);
     console.log('Text: ', parsedEmail.text);
 
-    // Set the preview length for the email body
-    const previewLength = env.PREVIEW_LENGTH || 400;
+    // Get the email subject
+    const emSubject = parsedEmail.subject || "No subject";
 
     // Get the email body
-    let emBody = parsedEmail.text.length > previewLength ? parsedEmail.text.substring(0, previewLength) + '\n... (*truncated*)' : parsedEmail.text;
+    let emBody = '';
+    if (parsedEmail.text) {
+      emBody += parsedEmail.text;
+    } else if (parsedEmail.html) {
+      emBody += '*No text content, showing HTML content*\n' + parsedEmail.html;
+    }
+
+    // Trim the body to the preview length
+    if (emBody.length > previewLength) {
+      emBody = emBody.substring(0, previewLength) + '\n... (*truncated*)';
+    }
+
+    // Set the message color
+    let emColor = 3447003;
 
     // Construct JSON payload for Discord webhook
     const data = {
@@ -53,7 +64,7 @@ export default {
         {
           title: emSubject,
           description: emBody,
-          color: 3447003,
+          color: emColor,
           fields: [
             {
               name: "From",
@@ -64,6 +75,10 @@ export default {
               name: "To",
               value: emAdd,
               inline: true
+            },
+            {
+              name: "Received",
+              value: new Date().toUTCString()
             }
           ]
         }

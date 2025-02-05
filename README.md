@@ -2,6 +2,9 @@
 
 Simple CloudFlare Workers to forward emails to Discord webhook.
 
+> [!NOTE]
+> This branch is tailored for SLURM email notifications.
+
 ## Usage
 
 1. Create a CloudFlare Account.

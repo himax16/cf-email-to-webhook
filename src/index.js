@@ -1,5 +1,24 @@
 import PostalMime from 'postal-mime';
 
+async function parseSlurmSubject(subject) {
+  const pattern = /^(?:(\S+) )*Slurm Job_id=(\d+) Name=(\S+) (Began|Failed|Ended), (?:Run time (\S+), (FAILED|TIMEOUT|COMPLETED|CANCELLED), ExitCode (\d+)|Queued time (\S+)).*$/;
+  const match = subject.match(pattern);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    cluster: match[1],
+    jobId: match[2],
+    jobName: match[3],
+    step: match[4],
+    time: match[5] || match[8],
+    status: match[6],
+    exitCode: match[7]
+  };
+}
+
 export default {
   async email(message, env, ctx) {
     // Get the Discord webhook from CF worker secrets
@@ -38,11 +57,35 @@ export default {
     console.log('HTML: ', parsedEmail.html);
     console.log('Text: ', parsedEmail.text);
 
-    // Get the email subject
-    const emSubject = parsedEmail.subject || "No subject";
+    // Try to parse the Slurm subject
+    const slurmData = await parseSlurmSubject(parsedEmail.subject);
+    if (!slurmData) {
+      console.error('Failed to parse Slurm subject');
+      return;
+    }
+
+    // Construct the subject
+    const emSubject = `${slurmData.jobName} (${slurmData.jobId}) - ${slurmData.step}${slurmData.cluster ? ` on ${slurmData.cluster}` : ''}`;
 
     // Get the email body
     let emBody = '';
+
+    // Add time information
+    if (slurmData.step === 'Began') {
+      emBody += '**Queued time**: ';
+    } else {
+      emBody += '**Run time**: ';
+    }
+    emBody += slurmData.time + '\n';
+
+    // Add status information
+    if (slurmData.status) {
+      emBody += `**Status**: ${slurmData.status}\n`;
+      emBody += slurmData.exitCode ? `**Exit code**: ${slurmData.exitCode}\n` : '\n';
+      emBody += '\n';
+    }
+
+    // Get the email body
     if (parsedEmail.text) {
       emBody += parsedEmail.text;
     } else if (parsedEmail.html) {
@@ -54,8 +97,15 @@ export default {
       emBody = emBody.substring(0, previewLength) + '\n... (*truncated*)';
     }
 
-    // Set the message color
-    let emColor = 3447003;
+    // Set the message color based on step and status
+    let emColor;
+    if (slurmData.step === 'Began') {
+      emColor = 3066993; // Green
+    } else if (slurmData.step === 'Failed' || slurmData.status === 'FAILED' || slurmData.status === 'TIMEOUT' || slurmData.status === 'CANCELLED') {
+      emColor = 15158332; // Red
+    } else {
+      emColor = 3447003; // Blue
+    }
 
     // Construct JSON payload for Discord webhook
     const data = {
